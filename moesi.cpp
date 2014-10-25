@@ -125,9 +125,10 @@ int main()
 							cout<<"read miss "<<" other cache M"<<endl;
 							cout<<"no memory access required"<<endl;
 							this_cache->block[blk.addr]=other_cache->block[i];
+							cout<<"moesi S O read miss"<<endl;
 							(this_cache->block[blk.addr]).state='S';  //doubt
-							(other_cache->block[i]).state='S';
-							mem->block[blk.addr]=other_cache->block[i];
+							(other_cache->block[i]).state='O';
+							
 
 						}
 						else if((other_cache->block[i]).state=='E'||(other_cache->block[i]).state=='S')
@@ -173,6 +174,12 @@ int main()
 					//other_cache.block[i].state='I';
 					writehit=1;
 				//	cout<<"write hit at processor"<<(procNum+1)<<" at addr" << i<<endl;
+					int j;
+					for(j=0;j<32;j++)
+			{
+					if((other_cache->block[j]).addr==blk.addr && other_cache->block[j].state=='O')
+						other_cache->block[j].state='I';
+			}
 					if(this_cache->block[i].state=='M')
 					{
 						cout<<"value modified from M to M"<<endl;
@@ -182,6 +189,12 @@ int main()
 					{
 						this_cache->block[i].state='M';
 						cout<<"value modified from E to M"<<endl;
+
+					}
+					else if(this_cache->block[i].state=='O')
+					{
+						this_cache->block[i].state='M';
+						cout<<"value modified from O to M"<<endl;
 
 					}
 					else if(this_cache->block[i].state=='S')
