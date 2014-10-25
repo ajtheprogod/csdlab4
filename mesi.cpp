@@ -45,20 +45,22 @@ int main()
 {
 
 	srand(time(NULL));
-	struct MainMemory mem;
-	struct Bus bus;
-	struct Processor p1;
-	p1.index=0;
-	struct Processor p2;
-	p2.index=1;
+	struct MainMemory* mem=new MainMemory();
+	struct Bus* bus =new  Bus();
+	struct Processor* p1=new Processor();
+	p1->index=0;
+	struct Processor* p2=new Processor();
+	p2->index=1;
 	int i;
 	for(i=0;i<1024;i++)
-		mem.block[i].addr=i;
-
-
+		mem->block[i].addr=i;
+//starting
+	int count=1;
+   while(count<100000)
+   {
 	int procNum=rand()%2;
 	int block_no=rand()%1024;
-	struct Block blk=mem.block[block_no];
+	struct Block blk=mem->block[block_no];
 //	int word_no=rand()%8;
 //    blk.state='M';
 	int readwrite=rand()%2;
@@ -69,8 +71,8 @@ int main()
 
 	if(!readwrite)    //read
 	{
-		struct Processor processor;
-		struct Processor other_processor;
+		struct Processor* processor=new Processor();;
+		struct Processor* other_processor=new Processor();;
 		if(procNum==0)
 			{
 				processor=p1;
@@ -81,19 +83,19 @@ int main()
 			processor=p2;
 			other_processor=p1;
 		}
-		struct Cache this_cache=processor.cache;
-		struct Cache other_cache=processor.cache;
+		struct Cache* this_cache=&processor->cache;
+		struct Cache* other_cache=&other_processor->cache;
 
 
 //hit
 		int readhit=0;
         for(i=0;i<32;i++)
 			{
-			if(this_cache.block[i].addr==blk.addr)
+			if((this_cache->block[i]).addr==blk.addr)
 			{
 				//other_cache.block[i].state='I';
 				readhit=1;
-				cout<<"hit at processor"<<(procNum+1)<<" at addr" << i;
+				cout<<"hit at processor"<<(procNum+1)<<" at addr" << i<<endl;
 			}
 			break;
 		    }
@@ -102,39 +104,53 @@ int main()
 
  	if(!readhit)
  	{
- 		cout<<"read request on bus by processor"<<(procNum+1)<<endl;
- 		bus.CacheCoherenceProtocol="read_req";
- 		
+ 	//	cout<<"read request on bus by processor"<<(procNum+1)<<endl;
+ 		bus->CacheCoherenceProtocol="read_req";
+ 		//cout<<"hey";
+ 		int memoryhit=1;
  		for(i=0;i<32;i++)
 			{
-			if(other_cache.block[i].addr==blk.addr)
+		//		cout<<"loop";
+			if((other_cache->block[i]).addr==blk.addr)
 			{
 				//other_cache.block[i].state='I';
 				//readhit=1;
 				//cout<<"hit at processor"<<(procNum+1)<<" at addr" << i;
-				if(other_cache.block[i].state=='M')
+				if((other_cache->block[i]).state=='M')
 				{
 					cout<<"read miss "<<" other cache M"<<endl;
 					cout<<"no memory access required"<<endl;
-					this_cache.block[blk.addr]=other_cache.block[i];
-					this_cache.block[blk.addr].state='S';  //doubt
-					other_cache.block[i].state='S';
-					mem.block[blk.addr]=other_cache.block[i];
+					this_cache->block[blk.addr]=other_cache->block[i];
+					(this_cache->block[blk.addr]).state='S';  //doubt
+					(other_cache->block[i]).state='S';
+					mem->block[blk.addr]=other_cache->block[i];
                    
 				}
-				else if(other_cache.block[i].state=='E'||other_cache.block[i].state=='S')
+				else if((other_cache->block[i]).state=='E'||(other_cache->block[i]).state=='S')
 				{
 					cout<<"read miss "<<" other cache E or S"<<endl;
 					cout<<"no memory access required"<<endl;
-					this_cache.block[blk.addr]=other_cache.block[i];
-					this_cache.block[blk.addr].state='S';  //doubt
-					other_cache.block[i].state='S';
+					this_cache->block[blk.addr]=other_cache->block[i];
+					(this_cache->block[blk.addr]).state='S';  //doubt
+					(other_cache->block[i]).state='S';
 					//mem.block[blk.addr]=other_cache.block[i];
 
 				}
+				memoryhit=0;
+			 break;	
 			}
-			break;
+		//	cout<<"if over";
+			
 		}
+
+		if(memoryhit)
+		{
+	//		cout<<"memory hit"<<endl;
+			this_cache->block[(blk.addr%32)]=mem->block[blk.addr];
+			this_cache->block[blk.addr].state='E';
+
+		}
+
 
  	}
        
@@ -164,11 +180,12 @@ int main()
 	}
 	else //write
 	{
-
+    // cout<<"write"<<endl;
 
 	}
 
-
+count++;
+}
 
 	return 0;
 
