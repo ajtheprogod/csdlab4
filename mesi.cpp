@@ -58,16 +58,18 @@ int main()
 	int count=1;
 	while(count<100000)
 	{
-		//	cout << count<<endl;
+			//cout << count<<endl;
 		int procNum=rand()%2;
 		int block_no=rand()%1024;
 		struct Block blk=mem->block[block_no];
 		//	int word_no=rand()%8;
 		//    blk.state='M';
 		int write=rand()%2;
-
-
-		//cout<<processor<<"  "<<block_no<<" "<<"  "<<readwrite;
+		cout<<"============================="<<endl;
+        if(write==0)
+		cout<<"processor "<<(procNum+1)<<"  block number "<<block_no<<" read operation "<<endl;
+		else
+		cout<<"processor "<<(procNum+1)<<"  block number "<<block_no<<" write operation "<<endl;
 		//read 0,write 1
 
 		struct Processor* processor=new Processor();;
@@ -108,7 +110,7 @@ int main()
 
 			if(!readhit)
 			{
-				//	cout<<"read request on bus by processor"<<(procNum+1)<<endl;
+				cout<<"read request on bus by processor"<<(procNum+1)<<endl;
 				bus->CacheCoherenceProtocol="read_req";
 				//cout<<"hey";
 				int memoryhit=1;
@@ -124,8 +126,8 @@ int main()
 						{
 							cout<<"read miss "<<" other cache M"<<endl;
 							cout<<"no memory access required"<<endl;
-							this_cache->block[blk.addr]=other_cache->block[i];
-							(this_cache->block[blk.addr]).state='S';  //doubt
+							this_cache->block[blk.addr%32]=other_cache->block[i];
+							(this_cache->block[blk.addr%32]).state='S';  //doubt
 							(other_cache->block[i]).state='S';
 							mem->block[blk.addr]=other_cache->block[i];
 
@@ -134,8 +136,8 @@ int main()
 						{
 							cout<<"read miss "<<" other cache E or S"<<endl;
 							cout<<"no memory access required"<<endl;
-							this_cache->block[blk.addr]=other_cache->block[i];
-							(this_cache->block[blk.addr]).state='S';  //doubt
+							this_cache->block[blk.addr%32]=other_cache->block[i];
+							(this_cache->block[blk.addr%32]).state='S';  //doubt
 							(other_cache->block[i]).state='S';
 							//mem.block[blk.addr]=other_cache.block[i];
 
@@ -149,9 +151,9 @@ int main()
 
 				if(memoryhit)
 				{
-					//		cout<<"memory hit"<<endl;
+					cout<<"read miss ,fetching from memory"<<endl;
 					this_cache->block[(blk.addr%32)]=mem->block[blk.addr];
-					this_cache->block[blk.addr].state='E';
+					this_cache->block[blk.addr%32].state='E';
 
 				}
 
@@ -223,18 +225,18 @@ int main()
 					{
 						this_cache->block[blk.addr%32]=mem->block[blk.addr];
 						bus->CacheCoherenceProtocol="RWITM";
-						cout<<"write miss bus protocol read with intent to modify"<<endl;
+						cout<<"write miss bus protocol read with intent to modify from other cache E or S"<<endl;
 						this_cache->block[blk.addr%32].state='M';
 						other_cache->block[i].state='I';
 					}
 					else if(other_cache->block[i].state=='M')
 					{
 						bus->CacheCoherenceProtocol="RWITM";
-						cout<<"Modify1 -- write miss bus protocol read with intent to modify"<<endl;
+						cout<<"Modify1 -- write miss bus protocol read with intent to modify from other Cache M"<<endl;
 						cout<<"write back"<<endl;
                         mem->block[blk.addr]=other_cache->block[i];
 						other_cache->block[i].state=='I';
-						cout<<"Modify2 -- write miss bus protocol read with intent to modify"<<endl;
+						cout<<"Modify2 -- write miss bus protocol read with intent to modify from other Cache M"<<endl;
 						this_cache->block[blk.addr%32]=mem->block[blk.addr];
 						this_cache->block[blk.addr%32].state='M';
 
@@ -245,8 +247,9 @@ int main()
 			}
 			if(!hitInOtherCache)
 			{
+				cout<<"write miss fetch from memory and changing fetched value to M"<<endl;
 				this_cache->block[blk.addr%32]=mem->block[blk.addr];
-						this_cache->block[blk.addr%32].state='M';
+				this_cache->block[blk.addr%32].state='M';
 
 			}
 
