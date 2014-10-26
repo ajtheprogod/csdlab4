@@ -66,10 +66,19 @@ int main()
 	int EtoI=0;
 	int memtoE=0;
 	int MemtoM=0;
+	int MemtoS=0;
 	int EtoM=0;
 	int StoM=0;
+	int EtoE=0;
 	int CachetoM=0;
-	while(count<1000000)
+	int reads=0;
+	int writes=0;
+	int readhitCount=0;
+	int readmissCount=0;
+	int writehitCount=0;
+	int writemissCount=0;
+
+	while(count<100000)
 	{
 			//cout << count<<endl;
 		int procNum=rand()%2;
@@ -103,7 +112,7 @@ int main()
 
 		if(!write)    //read
 		{
-
+			reads++;
 
 
 			//hit
@@ -114,6 +123,9 @@ int main()
 				{
 					//other_cache.block[i].state='I';
 					readhit=1;
+					readhitCount++;
+					if(this_cache->block[i].state=='E')
+					EtoE++;
 					cout<<"hit at processor"<<(procNum+1)<<" at addr" << i<<endl;
 				}
 				break;
@@ -123,6 +135,7 @@ int main()
 
 			if(!readhit)
 			{
+				readmissCount++;
 				cout<<"read request on bus by processor"<<(procNum+1)<<endl;
 				bus->CacheCoherenceProtocol="read_req";
 				coherence++;
@@ -142,6 +155,7 @@ int main()
 							cout<<"no memory access required"<<endl;
 							this_cache->block[blk.addr%32]=other_cache->block[i];
 							(this_cache->block[blk.addr%32]).state='S';  //doubt
+							
 							MtoS++;
 							(other_cache->block[i]).state='S';
 							mem->block[blk.addr]=other_cache->block[i];
@@ -153,8 +167,12 @@ int main()
 							cout<<"no memory access required"<<endl;
 							this_cache->block[blk.addr%32]=other_cache->block[i];
 							(this_cache->block[blk.addr%32]).state='S';  //doubt
+							if(other_cache->block[i].state=='E')
 							EtoS++;
+							else
 							StoS++;
+
+							MemtoS++;
 							(other_cache->block[i]).state='S';
 							//mem.block[blk.addr]=other_cache.block[i];
 
@@ -185,6 +203,7 @@ int main()
 		else //write
 		{
 			//cout<<"write"<<endl;
+			writes++;
 			int writehit=0;
 			for(i=0;i<32;i++)
 			{
@@ -192,6 +211,7 @@ int main()
 				{
 					//other_cache.block[i].state='I';
 					writehit=1;
+					writehitCount++;
 				//	cout<<"write hit at processor"<<(procNum+1)<<" at addr" << i<<endl;
 					if(this_cache->block[i].state=='M')
 					{
@@ -235,6 +255,7 @@ int main()
 
 			if(writehit==0)
 			{
+				writemissCount++;
 				int hitInOtherCache=0;
 				for(i=0;i<32;i++)
 			{
@@ -280,6 +301,7 @@ int main()
 			}
 			if(!hitInOtherCache)
 			{
+				coherence++;
 				cout<<"write miss fetch from memory and changing fetched value to M"<<endl;
 				this_cache->block[blk.addr%32]=mem->block[blk.addr];
 				this_cache->block[blk.addr%32].state='M';
@@ -296,20 +318,27 @@ int main()
 		count++;
 	}
 
+	cout<<"no of reads are "<<reads<<endl;
+	cout<<"no of writes are "<<writes<<endl;
+	cout<<"no of read hit are "<<readhitCount<<endl;
+	cout<<"no of read miss are "<<readmissCount<<endl;
+	cout<<"no of write hit are "<<writehitCount<<endl;
+	cout<<"no of write miss are "<<writemissCount<<endl;
 	cout<<"No of bus transactions are "<<coherence<<endl;
 	cout<<"No of M to S state changes are "<<MtoS<<endl;
 	cout<<"No of E to S state changes are "<<EtoS<<endl;
 	cout<<"No of E to M state changes are "<<EtoM<<endl;
+	cout<<"No of E to E state changes are "<<EtoE<<endl;
 	cout<<"No of S to M state changes are "<<StoM<<endl;
 	cout<<"No of S to S state changes are "<<StoS<<endl;
-	cout<<"No of mem to E state changes are "<<memtoE<<endl;
 	cout<<"No of M to M state changes are "<<MtoM<<endl;
 		cout<<"No of M to I state changes are "<<MtoI<<endl;
 	cout<<"No of E to I state changes are "<<EtoI<<endl;
 	cout<<"No of S to I state changes are "<<StoI<<endl;
-	cout<<"memory to exclusive changes are"<<memtoE<<endl;
-	cout<<"memory to Modified changes are"<<MemtoM<<endl;
-	cout<<"cache to Modified are"<<CachetoM<<endl;
+	cout<<"memory to exclusive changes are "<<memtoE<<endl;
+	cout<<"memory to Modified changes are "<<MemtoM<<endl;
+	cout<<"memory to shared changes are "<<MemtoS<<endl;
+	cout<<"cache to Modified are "<<CachetoM<<endl;
 
 	return 0;
 
